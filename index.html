@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+/>
+<title>Digital Underwater Organism</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #000;
+}
+
+/* FULLY TRANSPARENT MENU */
+.panel {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: 10px;
+  height: 36vh;
+  max-height: 340px;
+  z-index: 20;
+
+  padding: 12px 14px 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  border-radius: 18px;
+  border: 1px solid rgba(255, 79, 160, 0.30);
+  box-shadow:
+    0 0 0 1px rgba(255, 79, 160, 0.10) inset,
+    0 0 24px rgba(255, 0, 140, 0.08);
+}
+
+.panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 79, 160, 0.45);
+  border-radius: 30px;
+}
+
+.panel-title {
+  color: rgba(255,255,255,0.86);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mode-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 10px;
+  margin-top: 2px;
+}
+
+.controls-grid .control {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.controls-grid .control label {
+  font-size: 10px;
+  gap: 6px;
+}
+
+.controls-grid input[type="range"] {
+  height: 20px;
+}
+
+@media (max-width: 360px) {
+  .controls-grid {
+    column-gap: 8px;
+  }
+  .controls-grid .control label {
+    font-size: 9px;
+  }
+}
+
+.btn,
+.mode-btn {
+  width: 100%;
+  padding: 9px 8px;
+  border: 1px solid rgba(255, 79, 160, 0.78);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.0);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-shadow: 0 0 10px rgba(0,0,0,0.85);
+  box-shadow: 0 0 16px rgba(255, 0, 140, 0.06);
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.mode-btn.active {
+  background: rgba(255, 79, 160, 0.16);
+  box-shadow:
+    0 0 0 1px rgba(255, 79, 160, 0.35) inset,
+    0 0 18px rgba(255, 0, 140, 0.15);
+}
+
+.control {
+  margin-bottom: 9px;
+}
+
+.control label {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #ff8fc4;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  text-shadow: 0 0 10px rgba(0,0,0,0.9);
+}
+
+.value {
+  color: rgba(255,255,255,0.84);
+  font-size: 10px;
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 18px;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  margin: 0;
+  accent-color: #ff4fa0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #ff4fa0 0%,
+    #ff4fa0 var(--fill, 50%),
+    rgba(220,220,230,0.9) var(--fill, 50%),
+    rgba(220,220,230,0.9) 100%
+  );
+  box-shadow: 0 0 10px rgba(0,0,0,0.75);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #8e8e94;
+  border: 2px solid rgba(240,240,245,0.95);
+  margin-top: -5.5px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.85);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(220,220,230,0.9);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: #ff4fa0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #8e8e94;
+  border: 2px solid rgba(240,240,245,0.95);
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+  <canvas id="canvas"></canvas>
+
+  <div class="panel">
+    <div class="panel-title">Digital Organism</div>
+
+    <div class="button-row">
+      <button class="btn" id="randomize">Randomize</button>
+      <button class="btn" id="exportPng">Export PNG</button>
+      <button class="btn" id="exportMp4">Export .MP4</button>
+    </div>
+
+    <div class="mode-row">
+      <button class="mode-btn active" data-mode="0">Hybrid</button>
+      <button class="mode-btn" data-mode="1">Dots</button>
+      <button class="mode-btn" data-mode="2">Fine</button>
+    </div>
+
+    <div class="controls-grid">
+    <div class="control"><label>Digital Grid <span class="value" id="gridVal"></span></label><input id="grid" type="range" min="0" max="100" value="45"></div>
+    <div class="control"><label>Scale <span class="value" id="scaleVal"></span></label><input id="scale" type="range" min="60" max="300" value="104"></div>
+    <div class="control"><label>Center X <span class="value" id="centerXVal"></span></label><input id="centerX" type="range" min="-100" max="100" value="10"></div>
+    <div class="control"><label>Center Y <span class="value" id="centerYVal"></span></label><input id="centerY" type="range" min="-100" max="100" value="-2"></div>
+    <div class="control"><label>Head Position <span class="value" id="headPosVal"></span></label><input id="headPos" type="range" min="-100" max="100" value="0"></div>
+    <div class="control"><label>Tail Position <span class="value" id="tailPosVal"></span></label><input id="tailPos" type="range" min="-100" max="100" value="0"></div>
+
+    <div class="control"><label>Body Articles <span class="value" id="segmentsVal"></span></label><input id="segments" type="range" min="12" max="52" value="30"></div>
+    <div class="control"><label>Dots Per Article <span class="value" id="bodyDotsVal"></span></label><input id="bodyDots" type="range" min="8" max="48" value="24"></div>
+    <div class="control"><label>Fiber Amount <span class="value" id="fibersVal"></span></label><input id="fibers" type="range" min="25" max="180" value="105"></div>
+    <div class="control"><label>Fiber Dots <span class="value" id="fiberDotsVal"></span></label><input id="fiberDots" type="range" min="5" max="34" value="17"></div>
+    <div class="control"><label>Body Thickness <span class="value" id="thicknessVal"></span></label><input id="thickness" type="range" min="20" max="110" value="62"></div>
+    <div class="control"><label>Fin Spread <span class="value" id="spreadVal"></span></label><input id="spread" type="range" min="20" max="160" value="92"></div>
+    <div class="control"><label>Asymmetry <span class="value" id="asymVal"></span></label><input id="asym" type="range" min="0" max="130" value="78"></div>
+    <div class="control"><label>Movement <span class="value" id="speedVal"></span></label><input id="speed" type="range" min="0" max="100" value="42"></div>
+    <div class="control"><label>Curl <span class="value" id="curlVal"></span></label><input id="curl" type="range" min="0" max="140" value="68"></div>
+    <div class="control"><label>Halo Dots <span class="value" id="haloVal"></span></label><input id="halo" type="range" min="0" max="500" value="180"></div>
+    <div class="control"><label>Dot Size <span class="value" id="dotSizeVal"></span></label><input id="dotSize" type="range" min="20" max="110" value="54"></div>
+    <div class="control"><label>Brightness <span class="value" id="brightnessVal"></span></label><input id="brightness" type="range" min="30" max="130" value="82"></div>
+    <div class="control"><label>Contrast <span class="value" id="contrastVal"></span></label><input id="contrast" type="range" min="80" max="180" value="126"></div>
+    <div class="control"><label>Tilt <span class="value" id="tiltVal"></span></label><input id="tilt" type="range" min="-90" max="90" value="-12"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d", { alpha: false });
+
+const ids = [
+  "grid","scale","centerX","centerY","headPos","tailPos",
+  "segments","bodyDots","fibers","fiberDots","thickness","spread",
+  "asym","speed","curl","halo","dotSize","brightness",
+  "contrast","tilt"
+];
+
+const controls = {};
+ids.forEach(id => controls[id] = document.getElementById(id));
+
+let W, H, DPR;
+let seed = Math.random() * 9999;
+let mode = 0;
+
+function resize() {
+  DPR = Math.max(1, Math.min(1.5, window.devicePixelRatio || 1));
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + "px";
+  canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+function val(id) {
+  return Number(controls[id].value);
+}
+
+function params() {
+  return {
+    grid: val("grid") / 100,
+    scale: val("scale") / 100,
+    centerX: val("centerX") / 100,
+    centerY: val("centerY") / 100,
+    headPos: val("headPos") / 100,
+    tailPos: val("tailPos") / 100,
+
+    segments: val("segments"),
+    bodyDots: val("bodyDots"),
+    fibers: val("fibers"),
+    fiberDots: val("fiberDots"),
+    thickness: val("thickness") / 100,
+    spread: val("spread") / 100,
+    asym: val("asym") / 100,
+    speed: val("speed") / 100,
+    curl: val("curl") / 100,
+    halo: val("halo"),
+    dotSize: val("dotSize") / 100,
+    brightness: val("brightness") / 100,
+    contrast: val("contrast") / 100,
+    tilt: val("tilt") * Math.PI / 180
+  };
+}
+
+function clamp(v, a, b) {
+  return Math.max(a, Math.min(b, v));
+}
+
+function fract(x) {
+  return x - Math.floor(x);
+}
+
+function rand(n) {
+  return fract(Math.sin(n * 19.191 + seed * 31.313) * 43758.5453);
+}
+
+function updateSliderFill(input) {
+  const min = Number(input.min);
+  const max = Number(input.max);
+  const value = Number(input.value);
+  const pct = ((value - min) / (max - min)) * 100;
+  input.style.setProperty("--fill", pct + "%");
+}
+
+function updateValues() {
+  ids.forEach(id => {
+    const el = document.getElementById(id + "Val");
+    if (el) el.textContent = controls[id].value;
+  });
+}
+
+Object.values(controls).forEach(el => {
+  updateSliderFill(el);
+  el.addEventListener("input", () => {
+    updateSliderFill(el);
+    updateValues();
+  });
+});
+updateValues();
+
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    mode = Number(btn.dataset.mode);
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+function spine(u, t, P, base) {
+  const len = base * 2.45;
+  const x = -len * 0.5 + u * len;
+
+  const swim = Math.sin(u * Math.PI * 1.25 + t * (0.6 + P.speed * 1.8)) * base * 0.13;
+  const micro = Math.sin(u * 8.5 + t * 1.2 + seed) * base * 0.035;
+  const lift = Math.pow(clamp((u - 0.6) / 0.4, 0, 1), 1.6) * base * 0.26;
+  const asym = (u - 0.32) * base * 0.26 * P.asym;
+
+  const y = swim + micro + asym - lift;
+  return { x, y };
+}
+
+function tangent(u, t, P, base) {
+  const e = 0.002;
+  const a = spine(clamp(u - e, 0, 1), t, P, base);
+  const b = spine(clamp(u + e, 0, 1), t, P, base);
+  let dx = b.x - a.x;
+  let dy = b.y - a.y;
+  const d = Math.hypot(dx, dy) || 1;
+  return { x: dx / d, y: dy / d };
+}
+
+function normal(u, t, P, base) {
+  const tg = tangent(u, t, P, base);
+  return { x: -tg.y, y: tg.x };
+}
+
+function radius(u, t, P, base) {
+  const body = Math.pow(Math.sin(Math.PI * u), 0.74);
+  const pulse = 0.88 + Math.sin(u * 9 + t * 1.4 + seed) * 0.12;
+  return base * 0.42 * P.thickness * body * pulse;
+}
+
+function snap(v, grid) {
+  if (grid <= 0.02) return v;
+  const g = 2 + grid * 8;
+  return Math.round(v / g) * g;
+}
+
+function dot(x, y, size, alpha, P) {
+  ctx.beginPath();
+  ctx.fillStyle = `rgba(255,255,255,${alpha * P.brightness})`;
+  ctx.arc(x, y, size, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function line(x1, y1, x2, y2, alpha, width, P) {
+  ctx.beginPath();
+  ctx.strokeStyle = `rgba(255,255,255,${alpha * P.brightness})`;
+  ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function drawDigitalBody(t, P, base) {
+  const segs = P.segments;
+  const dotsPer = P.bodyDots;
+
+  for (let i = 0; i < segs; i++) {
+    const u = i / (segs - 1);
+    const p = spine(u, t, P, base);
+    const n = normal(u, t, P, base);
+    const tg = tangent(u, t, P, base);
+    const r = radius(u, t, P, base);
+
+    const articleAlpha = 0.08 + Math.sin(Math.PI * u) * 0.28;
+    const ribWidth = 0.45 + Math.sin(Math.PI * u) * 0.6;
+
+    for (let j = -dotsPer; j <= dotsPer; j++) {
+      const k = j / dotsPer;
+      const shell = Math.abs(k);
+      const curve = Math.sin(k * Math.PI) * r * 0.18;
+
+      let x = p.x + n.x * k * r + tg.x * curve;
+      let y = p.y + n.y * k * r + tg.y * curve;
+
+      const organicNoise =
+        (rand(i * 31.1 + j * 5.7) - 0.5) *
+        base *
+        0.012 *
+        (1 - P.grid);
+
+      x += organicNoise;
+      y += organicNoise * 0.7;
+
+      x = snap(x, P.grid);
+      y = snap(y, P.grid);
+
+      const edge = shell > 0.76;
+      const center = shell < 0.22;
+
+      const alpha =
+        articleAlpha *
+        (edge ? 1.2 : 0.65) *
+        (center ? 0.7 : 1.0);
+
+      const size =
+        base *
+        0.006 *
+        P.dotSize *
+        (edge ? 1.45 : 0.75) *
+        (1 + rand(i * 8 + j) * 0.45);
+
+      dot(x, y, size, alpha, P);
+
+      if (mode === 0 && j > -dotsPer && j % 4 === 0) {
+        const k2 = (j - 1) / dotsPer;
+        const x2 = p.x + n.x * k2 * r;
+        const y2 = p.y + n.y * k2 * r;
+        line(x, y, snap(x2, P.grid), snap(y2, P.grid), alpha * 0.22, ribWidth, P);
+      }
+    }
+
+    if (i > 0 && mode !== 1) {
+      const prev = spine((i - 1) / (segs - 1), t, P, base);
+      line(prev.x, prev.y, p.x, p.y, 0.055, 0.7, P);
+    }
+  }
+}
+
+function bezierPoint(p0, p1, p2, p3, tt) {
+  const mt = 1 - tt;
+  return {
+    x:
+      mt * mt * mt * p0.x +
+      3 * mt * mt * tt * p1.x +
+      3 * mt * tt * tt * p2.x +
+      tt * tt * tt * p3.x,
+    y:
+      mt * mt * mt * p0.y +
+      3 * mt * mt * tt * p1.y +
+      3 * mt * tt * tt * p2.y +
+      tt * tt * tt * p3.y
+  };
+}
+
+function drawFiberPath(p0, p1, p2, p3, count, size, alpha, P, protrusionBias = 1) {
+  let prev = null;
+
+  for (let i = 0; i <= count; i++) {
+    const tt = i / count;
+    const p = bezierPoint(p0, p1, p2, p3, tt);
+
+    let x = snap(p.x, P.grid * 0.7);
+    let y = snap(p.y, P.grid * 0.7);
+
+    const tipBoost = tt > 0.84 ? 1.8 + protrusionBias * 0.35 : 1;
+    const s = size * (0.55 + tt * 0.9) * tipBoost;
+
+    if (mode !== 2 || i % 2 === 0) {
+      dot(x, y, s, alpha * (0.7 + tt * 0.55), P);
+    }
+
+    if (mode === 0 && prev && i % 3 === 0) {
+      line(prev.x, prev.y, x, y, alpha * 0.15, 0.45, P);
+    }
+
+    if (tt > 0.88 && i % 2 === 0) {
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255,255,255,${alpha * 1.08 * P.brightness})`;
+      ctx.ellipse(x, y, s * (1.7 + protrusionBias * 0.25), s * 0.9, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    prev = { x, y };
+  }
+}
+
+function drawSideFibers(t, P, base) {
+  const count = P.fibers;
+
+  for (let i = 0; i < count; i++) {
+    const u = 0.04 + (i / count) * 0.92;
+    const p = spine(u, t, P, base);
+    const tg = tangent(u, t, P, base);
+    const n = normal(u, t, P, base);
+    const r = radius(u, t, P, base);
+
+    const rr = rand(i * 9.91);
+    const mainSide = rr > 0.22 ? 1 : -1;
+
+    const sides = [
+      { side: mainSide, strength: 1.0 },
+      { side: -mainSide, strength: 0.78 + rand(i * 1.91) * 0.22 }
+    ];
+
+    for (let s = 0; s < sides.length; s++) {
+      const side = sides[s].side;
+      const sideStrength = sides[s].strength;
+
+      const len =
+        base *
+        (0.24 + (1 - u) * 0.46 + rr * 0.15) *
+        P.spread *
+        (side > 0 ? 1.0 : 0.72) *
+        sideStrength;
+
+      const ax = p.x + n.x * r * side * 0.74;
+      const ay = p.y + n.y * r * side * 0.74;
+
+      const wave =
+        Math.sin(t * (0.7 + P.speed) + i * 0.33 + seed + s) *
+        base *
+        0.045 *
+        P.curl;
+
+      const bx =
+        ax -
+        tg.x * len +
+        n.x * side * len * (0.18 + rr * 0.42) +
+        n.x * wave;
+
+      const by =
+        ay -
+        tg.y * len +
+        n.y * side * len * (0.18 + rr * 0.42) +
+        n.y * wave;
+
+      const c1 = {
+        x: ax - tg.x * len * 0.22 + n.x * side * len * 0.08,
+        y: ay - tg.y * len * 0.22 + n.y * side * len * 0.08
+      };
+
+      const c2 = {
+        x: ax - tg.x * len * 0.68 + n.x * side * len * 0.34 + n.x * wave,
+        y: ay - tg.y * len * 0.68 + n.y * side * len * 0.34 + n.y * wave
+      };
+
+      drawFiberPath(
+        { x: ax, y: ay },
+        c1,
+        c2,
+        { x: bx, y: by },
+        P.fiberDots,
+        base * 0.0055 * P.dotSize,
+        0.07 + rr * 0.16,
+        P,
+        1.0
+      );
+    }
+  }
+}
+
+function drawHeadProtrusions(t, P, base) {
+  const headCount = Math.floor(P.fibers * 0.35);
+
+  for (let i = 0; i < headCount; i++) {
+    const rr = rand(300 + i * 7.1);
+    const u = clamp(0.74 + rr * 0.22 + P.headPos * 0.16, 0.50, 1.0);
+    const p = spine(u, t, P, base);
+    const tg = tangent(u, t, P, base);
+    const n = normal(u, t, P, base);
+    const r = radius(u, t, P, base);
+
+    const side = rr > 0.35 ? 1 : -1;
+    const ax = p.x + n.x * r * side * (0.65 + rr * 0.25) + tg.x * P.headPos * base * 0.12;
+    const ay = p.y + n.y * r * side * (0.65 + rr * 0.25) + tg.y * P.headPos * base * 0.12;
+
+    const len = base * (0.22 + rr * 0.18) * P.spread;
+    const lift = base * (0.12 + rr * 0.15);
+
+    const bx = ax - tg.x * len * 0.38 + n.x * side * len * 0.75;
+    const by = ay - tg.y * len * 0.38 + n.y * side * len * 0.75 - lift;
+
+    const c1 = {
+      x: ax - tg.x * len * 0.10 + n.x * side * len * 0.10,
+      y: ay - tg.y * len * 0.10 + n.y * side * len * 0.10 - lift * 0.15
+    };
+
+    const c2 = {
+      x: ax - tg.x * len * 0.35 + n.x * side * len * 0.42,
+      y: ay - tg.y * len * 0.35 + n.y * side * len * 0.42 - lift * 0.55
+    };
+
+    drawFiberPath(
+      { x: ax, y: ay },
+      c1,
+      c2,
+      { x: bx, y: by },
+      P.fiberDots + 2,
+      base * 0.0052 * P.dotSize,
+      0.10 + rr * 0.15,
+      P,
+      1.35
+    );
+  }
+}
+
+function drawTailProtrusions(t, P, base) {
+  const tailCount = Math.floor(P.fibers * 0.30);
+
+  for (let i = 0; i < tailCount; i++) {
+    const rr = rand(500 + i * 5.9);
+    const u = clamp(0.00 + rr * 0.20 + P.tailPos * 0.16, 0.0, 0.42);
+    const p = spine(u, t, P, base);
+    const tg = tangent(u, t, P, base);
+    const n = normal(u, t, P, base);
+    const r = radius(clamp(u + 0.03, 0, 1), t, P, base) * 0.75;
+
+    const side = rr > 0.5 ? 1 : -1;
+    const ax = p.x + n.x * r * side * (0.58 + rr * 0.25) + tg.x * P.tailPos * base * 0.12;
+    const ay = p.y + n.y * r * side * (0.58 + rr * 0.25) + tg.y * P.tailPos * base * 0.12;
+
+    const len = base * (0.24 + rr * 0.20) * P.spread * 2.85;
+    const bx = ax - tg.x * len * 0.9 + n.x * side * len * 0.36;
+    const by = ay - tg.y * len * 0.9 + n.y * side * len * 0.36;
+
+    const c1 = {
+      x: ax - tg.x * len * 0.24 + n.x * side * len * 0.05,
+      y: ay - tg.y * len * 0.24 + n.y * side * len * 0.05
+    };
+
+    const c2 = {
+      x: ax - tg.x * len * 0.60 + n.x * side * len * 0.24,
+      y: ay - tg.y * len * 0.60 + n.y * side * len * 0.24
+    };
+
+    drawFiberPath(
+      { x: ax, y: ay },
+      c1,
+      c2,
+      { x: bx, y: by },
+      P.fiberDots + 2,
+      base * 0.0053 * P.dotSize,
+      0.09 + rr * 0.15,
+      P,
+      1.25
+    );
+  }
+}
+
+function drawHalo(t, P, base) {
+  for (let i = 0; i < Math.floor(P.halo * 3); i++) {
+    const u = rand(i * 3.2);
+    const p = spine(u, t, P, base);
+    const n = normal(u, t, P, base);
+    const tg = tangent(u, t, P, base);
+    const r = radius(u, t, P, base);
+
+    const side = rand(i * 4.1) > 0.5 ? 1 : -1;
+    const away = r * (1.35 + rand(i * 5.9) * 4.8);
+    const along = (rand(i * 7.7) - 0.5) * base * 1.15;
+
+    let x = p.x + n.x * away * side + tg.x * along;
+    let y = p.y + n.y * away * side + tg.y * along;
+
+    x = snap(x, P.grid);
+    y = snap(y, P.grid);
+
+    const a = 0.055 + rand(i * 2.4) * 0.14;
+    const s = base * 0.0062 * P.dotSize * (0.75 + rand(i * 8.1) * 1.25);
+    dot(x, y, s, a, P);
+
+    if (mode === 0 && i % 4 === 0) {
+      const tailX = x - tg.x * base * (0.018 + rand(i * 6.6) * 0.035);
+      const tailY = y - tg.y * base * (0.018 + rand(i * 6.6) * 0.035);
+      line(x, y, snap(tailX, P.grid), snap(tailY, P.grid), a * 0.45, 0.35, P);
+    }
+  }
+}
+
+function drawFrame(ms) {
+  const t = ms * 0.001;
+  const P = params();
+  const base = Math.min(W, H) * 0.27;
+
+  canvas.style.filter = `contrast(${P.contrast}) brightness(${0.92 + P.brightness * 0.12})`;
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W * 0.56 + P.centerX * W * 0.14;
+  const cy = H * 0.43 + P.centerY * H * 0.14;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  const floatX = Math.sin(t * 0.45 + seed) * base * 0.018 * P.speed;
+  const floatY = Math.cos(t * 0.38 + seed) * base * 0.02 * P.speed;
+
+  ctx.translate(floatX, floatY);
+  ctx.rotate(P.tilt);
+  ctx.scale(P.scale, P.scale);
+
+  drawHalo(t, P, base);
+  drawDigitalBody(t, P, base);
+  drawSideFibers(t, P, base);
+  drawHeadProtrusions(t, P, base);
+  drawTailProtrusions(t, P, base);
+
+  ctx.restore();
+
+  requestAnimationFrame(drawFrame);
+}
+
+document.getElementById("randomize").addEventListener("click", () => {
+  seed = Math.random() * 9999;
+
+  controls.segments.value = Math.floor(20 + Math.random() * 22);
+  controls.bodyDots.value = Math.floor(16 + Math.random() * 20);
+  controls.fibers.value = Math.floor(80 + Math.random() * 70);
+  controls.fiberDots.value = Math.floor(11 + Math.random() * 15);
+  controls.thickness.value = Math.floor(48 + Math.random() * 34);
+  controls.spread.value = Math.floor(70 + Math.random() * 60);
+  controls.asym.value = Math.floor(40 + Math.random() * 55);
+  controls.curl.value = Math.floor(40 + Math.random() * 65);
+  controls.grid.value = Math.floor(20 + Math.random() * 60);
+  controls.halo.value = Math.floor(70 + Math.random() * 120);
+
+  Object.values(controls).forEach(updateSliderFill);
+  updateValues();
+});
+
+document.getElementById("exportPng").addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.download = "digital-underwater-organism.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
+
+let isRecordingVideo = false;
+
+function getBestVideoMimeType() {
+  if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return "";
+
+  const types = [
+    "video/mp4;codecs=h264",
+    "video/mp4;codecs=avc1",
+    "video/mp4",
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm"
+  ];
+
+  return types.find(type => MediaRecorder.isTypeSupported(type)) || "";
+}
+
+function exportVideoSequence() {
+  const btn = document.getElementById("exportMp4");
+
+  if (isRecordingVideo) return;
+
+  if (!canvas.captureStream || typeof MediaRecorder === "undefined") {
+    alert("Video export is not supported in this browser. Try Chrome or Edge on desktop.");
+    return;
+  }
+
+  isRecordingVideo = true;
+  btn.disabled = true;
+  btn.textContent = "Recording 15s";
+
+  const stream = canvas.captureStream(30);
+  const mimeType = getBestVideoMimeType();
+  const chunks = [];
+  let recorder;
+
+  try {
+    recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+  } catch (error) {
+    try {
+      recorder = new MediaRecorder(stream);
+    } catch (fallbackError) {
+      stream.getTracks().forEach(track => track.stop());
+      btn.disabled = false;
+      btn.textContent = "Export .MP4";
+      isRecordingVideo = false;
+      alert("Video export failed in this browser.");
+      return;
+    }
+  }
+
+  recorder.ondataavailable = event => {
+    if (event.data && event.data.size > 0) chunks.push(event.data);
+  };
+
+  recorder.onstop = () => {
+    const finalType = recorder.mimeType || mimeType || "video/webm";
+    const isMp4 = finalType.includes("mp4");
+    const extension = isMp4 ? "mp4" : "webm";
+    const blob = new Blob(chunks, { type: finalType });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.download = `digital-underwater-organism-15sec.${extension}`;
+    link.href = url;
+    link.click();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1200);
+    stream.getTracks().forEach(track => track.stop());
+
+    btn.disabled = false;
+    btn.textContent = "Export .MP4";
+    isRecordingVideo = false;
+
+    if (!isMp4) {
+      alert("This browser does not support direct MP4 recording. Exported WEBM instead.");
+    }
+  };
+
+  recorder.start();
+
+  setTimeout(() => {
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+  }, 15000);
+}
+
+document.getElementById("exportMp4").addEventListener("click", exportVideoSequence);
+
+requestAnimationFrame(drawFrame);
+</script>
+</body>
+</html>
