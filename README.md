@@ -4,7 +4,7 @@ Interactive browser-based generative particle artwork inspired by underwater org
 
 ## Play the app
 
-👉 **[Open Digital Underwater Organism](https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPOSITORY-NAME/)**
+👉 **[Open Digital Underwater Organism](https://De-Dur.github.io/Digital-Underwater-Organism/)**
 
 Replace this link with your final GitHub Pages link after publishing.
 
